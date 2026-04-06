@@ -19,6 +19,7 @@ class PcimageSpider(scrapy.Spider):
         page = response.meta["playwright_page"]
         page_count = 1
         max_page = 5
+        collected_items = []
 
         try:
             while page_count <= max_page:
@@ -30,23 +31,33 @@ class PcimageSpider(scrapy.Spider):
                     title = card.css(".product-name a::text").get()
                     price = card.css(".price-new::text").get()
                     if title:
-                        clean_title = title.strip()
-                        yield {
-                            "title": clean_title,
+                        collected_items.append({
+                            "title": title.strip(),
                             "price": price
-                        }
-                next_button = page.locator("div.links a.beh_pagination").nth(-2)
+                        })
 
-                if await next_button.count() > 0 and not await next_button.get_attribute("disabled"):
+                pagination = page.locator("div.links a.beh_pagination")
+                btn_count = await pagination.count()
+
+                if btn_count >= 2:
+                    # Second-to-last is "Next →", last is "Last Page →→|"
+                    next_button = pagination.nth(btn_count - 2)
+                    is_disabled = await next_button.evaluate("el => el.classList.contains('disabled')")
+                    if is_disabled:
+                        self.logger.info("Next button is disabled, no more pages")
+                        break
                     await next_button.click(force=True)
-                    await page.wait_for_load_state("networkidle")
-                    await page.wait_for_timeout(2000)
+                    await page.wait_for_selector("div.frame", state="visible")
+                    await page.wait_for_timeout(1500)
                     page_count += 1
                 else:
                     self.logger.info("No more pages")
                     break
         finally:
             await page.close()
+
+        for item in collected_items:
+            yield item
 
 
 
