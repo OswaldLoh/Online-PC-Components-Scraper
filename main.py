@@ -9,7 +9,8 @@ def should_abort_request(request):
         "media",
         "font",
         "stylesheet",
-        "other"  # often catches tracking pixels
+        "script",   # blocks JS like Zoho chat widget that slow scraping
+        "other"     # often catches tracking pixels
     )
 
 

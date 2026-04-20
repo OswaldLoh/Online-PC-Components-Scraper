@@ -19,20 +19,31 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 # Optional but recommended: Playwright settings
 PLAYWRIGHT_BROWSER_TYPE = "chromium"
 PLAYWRIGHT_LAUNCH_OPTIONS = {
-    "headless": False,
+    "headless": True,  # headless is faster; no need for a visible window
 }
+def _should_abort_request(request):
+    """Block non-essential resource types to speed up scraping."""
+    return request.resource_type in (
+        "image",
+        "media",
+        "font",
+        "stylesheet",
+        "script",   # blocks JS like Zoho chat widget
+        "other",    # tracking pixels etc.
+    )
+PLAYWRIGHT_ABORT_REQUESTS = _should_abort_request
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "playwright_scrapper (+http://www.yourdomain.com)"
 
-# Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+CONCURRENT_REQUESTS = 1
+CONCURRENT_REQUESTS_PER_DOMAIN = 1
 
+DOWNLOAD_DELAY = 0
 
-# Concurrency and throttling settings
-CONCURRENT_REQUESTS = 16
-CONCURRENT_REQUESTS_PER_DOMAIN = 4
-DOWNLOAD_DELAY = 1
+ROBOTSTXT_OBEY = False
+
+PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT = 15000
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False

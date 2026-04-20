@@ -44,8 +44,7 @@ class PcImageSpider(scrapy.Spider):
                         break
                     async with page.expect_navigation():
                         await next_button.click(force=True)
-                    # Ensure the new items are visible before looping back
-                    await page.wait_for_selector("div.frame", state="visible")
+                    await page.wait_for_selector("div.frame", state="attached")
                     page_count += 1
                 else:
                     self.logger.info("No more pages")
