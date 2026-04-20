@@ -16,7 +16,7 @@ class PcImageSpider(scrapy.Spider):
     async def parse(self, response):
         page = response.meta["playwright_page"]
         page_count = 1
-        max_page = 5
+        max_page = 7
 
         try:
             while page_count <= max_page:

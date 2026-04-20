@@ -28,6 +28,7 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+
 # Concurrency and throttling settings
 CONCURRENT_REQUESTS = 16
 CONCURRENT_REQUESTS_PER_DOMAIN = 4
