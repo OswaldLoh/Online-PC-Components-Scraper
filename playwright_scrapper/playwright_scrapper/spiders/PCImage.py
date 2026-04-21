@@ -1,9 +1,12 @@
+import math
+
 import scrapy
 
 
 class PcImageSpider(scrapy.Spider):
     name = "PCImage"
     allowed_domains = ["www.store.pcimage.com.my"]
+
     async def start(self):
         yield scrapy.Request(
             url="https://www.store.pcimage.com.my/pc-component",
@@ -16,7 +19,12 @@ class PcImageSpider(scrapy.Spider):
     async def parse(self, response):
         page = response.meta["playwright_page"]
         page_count = 1
-        max_page = 7
+        html = await page.content()
+        selector = scrapy.Selector(text=html)
+        paginations = selector.css("div.footer_pagination_entry.results::text").getall()
+        number = int(paginations[0].split()[-1])
+        max_page = math.ceil(number / 16)
+        print(f"max_page: {max_page}")
 
         try:
             while page_count <= max_page:
@@ -24,13 +32,14 @@ class PcImageSpider(scrapy.Spider):
                 html = await page.content()
                 selector = scrapy.Selector(text=html)
 
+
                 for card in selector.css("div.frame"):
                     title = card.css(".product-name a::text").get()
                     price = card.css(".price-new::text").get()
                     if title:
                         yield {
                             "title": title.strip(),
-                            "price": price
+                            "price": price.strip("RM")
                         }
 
                 pagination = page.locator("div.links a.beh_pagination")

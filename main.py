@@ -4,14 +4,21 @@ from playwright_scrapper.playwright_scrapper.spiders.PCImage import PcImageSpide
 
 
 def should_abort_request(request):
-    return request.resource_type in (
-        "image",
-        "media",
-        "font",
-        "stylesheet",
-        "script",   # blocks JS like Zoho chat widget that slow scraping
-        "other"     # often catches tracking pixels
-    )
+    # 1. Block heavy visual and media resource types
+    if request.resource_type in ("image", "media", "font", "stylesheet", "other"):
+        return True
+
+    blocked_domains = [
+        "zoho", "zohocdn", "zohopublic", "salesiq",
+        "google-analytics", "googletagmanager",
+        "facebook", "pixel", "clarity"
+    ]
+
+    # If any of the blocked domains are in the request URL, kill the request
+    if any(domain in request.url.lower() for domain in blocked_domains):
+        return True
+
+    return False
 
 
 def run_scraper():
@@ -30,7 +37,7 @@ def run_scraper():
         },
         "ROBOTSTXT_OBEY": True,
 
-        "CONCURRENT_REQUESTS": 2,
+        "CONCURRENT_REQUESTS": 64,
         "PLAYWRIGHT_MAX_CONTEXTS": 4,
         "PLAYWRIGHT_MAX_PAGES_PER_CONTEXT": 2,
 
@@ -49,7 +56,7 @@ def run_scraper():
 
     process = CrawlerProcess(settings=custom_settings)
     process.crawl(PcImageSpider)
-    process.start()
+    process.start(stop_after_crawl=True)
 
 if __name__ == "__main__":
     run_scraper()
